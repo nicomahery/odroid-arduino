@@ -1,14 +1,15 @@
 #include <Arduino.h>
 
 enum Mode { idle, start, run, shut};
-const uint8_t IGN_SENSOR_PIN = A0;
-const uint8_t ILL_SENSOR_PIN = A1;
-const uint8_t SHUT_PIN = 7;
-const uint8_t ILL_PIN = 8;
+const uint8_t IGN_SENSOR_PIN = A1;
+const uint8_t ILL_SENSOR_PIN = A0;
 const uint8_t RELAY_PIN = 9;
+const uint8_t SHUT_PIN = 10;
+const uint8_t ILL_PIN = 11;
 const unsigned short MAX_RETRY = 50;
+const bool REVERSE_HIGH_LOW = true;
 float ILLUMINATION_LIMIT = 0.9;
-float IGNITION_LIMIT = 3.2;
+float IGNITION_LIMIT = 3.1;
 unsigned short i = 0;
 float voltageILL = 0;
 float voltageIGN = 0;
@@ -17,7 +18,7 @@ Mode mode = idle;
 
 
 float readInputVoltage(uint8_t pin) {
-  return (analogRead(pin) * 3.3)/1024;
+  return (analogRead(pin) * 5.0)/1024;
 }
 
 void printMode() {
@@ -46,12 +47,35 @@ void printMode() {
   }
 }
 
+// Reverse the level if REVERSE_HIGH_LOW is true else keep the same level(used for reversed relay action)
+int getLevel(int level) {
+  if (!REVERSE_HIGH_LOW) {
+    return level;
+  }
+  else {
+    return level == HIGH ? LOW : HIGH;
+  }
+}
+
+void waitForStartComplete() {
+  digitalWrite(RELAY_PIN, getLevel(HIGH));
+  Serial.println("Wait for complete start");
+  delay(120000);
+  Serial.println("Start complete");
+}
+
 void setup() {
+  Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(SHUT_PIN, OUTPUT);
   pinMode(ILL_PIN, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
-  Serial.begin(9600);
+
+  if (REVERSE_HIGH_LOW) {
+    digitalWrite(ILL_PIN, HIGH);
+    digitalWrite(RELAY_PIN, HIGH);
+    digitalWrite(SHUT_PIN, HIGH);
+  }
 }
 
 void loop() {
@@ -92,6 +116,7 @@ void loop() {
       voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
 
       if (voltageIGN > IGNITION_LIMIT) {
+        waitForStartComplete();
         mode = run;
       }
       break;
@@ -120,19 +145,19 @@ void loop() {
         mode = idle;
       }
       else {
-        Serial.println("Start complete");
+        waitForStartComplete();
         mode = run;
       }
     }
     break;
 
   case run:
-    digitalWrite(RELAY_PIN, HIGH);
+    digitalWrite(RELAY_PIN, getLevel(HIGH));
     voltageILL = readInputVoltage(ILL_SENSOR_PIN);
     Serial.print("ILL voltage: ");
     Serial.println(voltageILL);
 
-    digitalWrite(ILL_PIN, voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW);
+    digitalWrite(ILL_PIN, getLevel(voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW));
     voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
     Serial.print("IGN voltage: ");
     Serial.println(voltageIGN);
@@ -153,12 +178,14 @@ void loop() {
 
   case shut:
     digitalWrite(LED_BUILTIN, HIGH);
-    digitalWrite(ILL_PIN, LOW);
-    digitalWrite(SHUT_PIN, HIGH);
-    delay(5000);
-    digitalWrite(RELAY_PIN, LOW);
-    digitalWrite(SHUT_PIN, LOW);
+    digitalWrite(SHUT_PIN, getLevel(HIGH));
+    Serial.println("Waiting for shutdown");
+    delay(20000);
+    digitalWrite(ILL_PIN, getLevel(LOW));
+    digitalWrite(RELAY_PIN, getLevel(LOW));
+    digitalWrite(SHUT_PIN, getLevel(LOW));
     digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("Shutdown complete");
     mode = idle;
     break;
   
