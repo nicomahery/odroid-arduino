@@ -88,8 +88,16 @@ void loop() {
     Serial.print("IGN voltage: ");
     Serial.println(voltageIGN);
 
-    if (voltageIGN > 3) {
-      mode = start;
+    if (voltageIGN > IGNITION_LIMIT) {
+      delay(200);
+      voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
+      Serial.println("Test start confirmation");
+      Serial.print("IGN voltage: ");
+      Serial.println(voltageIGN);
+
+      if (voltageIGN > IGNITION_LIMIT) {
+        mode = start;
+      }
     }
     else {
       delay(1000);
