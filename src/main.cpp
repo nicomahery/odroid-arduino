@@ -60,7 +60,7 @@ int getLevel(int level) {
 void waitForStartComplete() {
   digitalWrite(RELAY_PIN, getLevel(HIGH));
   Serial.println("Wait for complete start");
-  delay(120000);
+  delay(80000);
   Serial.println("Start complete");
 }
 
