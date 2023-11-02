@@ -1,16 +1,17 @@
 #include <Arduino.h>
 
 enum Mode { idle, start, run, shut};
-const uint8_t IGN_SENSOR_PIN = A1;
-const uint8_t ILL_SENSOR_PIN = A0;
+const uint8_t IGN_SENSOR_PIN = A0;
+const uint8_t ILL_SENSOR_PIN = A1;
 const uint8_t RELAY_PIN = 9;
 const uint8_t SHUT_PIN = 10;
 const uint8_t ILL_PIN = 11;
 const unsigned short MAX_RETRY = 50;
-const bool REVERSE_HIGH_LOW = true;
+const bool REVERSE_HIGH_LOW = false;
 float ILLUMINATION_LIMIT = 0.9;
 float IGNITION_LIMIT = 3.1;
 unsigned short i = 0;
+unsigned short a = 0;
 float voltageILL = 0;
 float voltageIGN = 0;
 bool isLedActivated = false;
@@ -57,10 +58,22 @@ int getLevel(int level) {
   }
 }
 
+void updateIllVoltageAndApplyBrightness() {
+  voltageILL = readInputVoltage(ILL_SENSOR_PIN);
+  Serial.print("ILL voltage: ");
+  Serial.println(voltageILL);
+  digitalWrite(ILL_PIN, getLevel(voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW));
+}
+
 void waitForStartComplete() {
   digitalWrite(RELAY_PIN, getLevel(HIGH));
   Serial.println("Wait for complete start");
-  delay(80000);
+  a = 0;
+  for (a=0; a<200; a++) {
+    updateIllVoltageAndApplyBrightness();
+    delay(400);
+  }
+  //delay(80000);
   Serial.println("Start complete");
 }
 
@@ -161,11 +174,8 @@ void loop() {
 
   case run:
     digitalWrite(RELAY_PIN, getLevel(HIGH));
-    voltageILL = readInputVoltage(ILL_SENSOR_PIN);
-    Serial.print("ILL voltage: ");
-    Serial.println(voltageILL);
-
-    digitalWrite(ILL_PIN, getLevel(voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW));
+    updateIllVoltageAndApplyBrightness();
+  
     voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
     Serial.print("IGN voltage: ");
     Serial.println(voltageIGN);
