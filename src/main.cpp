@@ -8,6 +8,8 @@ const uint8_t SHUT_PIN = 10;
 const uint8_t ILL_PIN = 11;
 const unsigned short MAX_RETRY = 50;
 const bool REVERSE_HIGH_LOW = false;
+const uint8_t QUEUE_SIZE = 4;
+
 float ILLUMINATION_LIMIT = 0.9;
 float IGNITION_LIMIT = 3.1;
 unsigned short i = 0;
@@ -16,6 +18,8 @@ float voltageILL = 0;
 float voltageIGN = 0;
 bool isLedActivated = false;
 Mode mode = idle;
+
+float illQueue[QUEUE_SIZE];
 
 
 float readInputVoltage(uint8_t pin) {
@@ -58,11 +62,27 @@ int getLevel(int level) {
   }
 }
 
+void addToIllQueue(float number) {
+  for (int i = QUEUE_SIZE; i>0; i--) {
+    illQueue[i] = illQueue[i-1];
+  }
+  illQueue[0] = number;
+}
+
+float getIllQueueMean() {
+  float d = 0;
+  for (float i:illQueue) {
+    d += i;
+  }
+  return d/QUEUE_SIZE;
+}
+
 void updateIllVoltageAndApplyBrightness() {
   voltageILL = readInputVoltage(ILL_SENSOR_PIN);
   Serial.print("ILL voltage: ");
   Serial.println(voltageILL);
-  digitalWrite(ILL_PIN, getLevel(voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW));
+  addToIllQueue(voltageILL);
+  digitalWrite(ILL_PIN, getLevel(getIllQueueMean() < ILLUMINATION_LIMIT ? HIGH: LOW));
 }
 
 void waitForStartComplete() {
