@@ -199,7 +199,7 @@ void loop() {
     voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
     Serial.print("IGN voltage: ");
     Serial.println(voltageIGN);
-    delay(200);
+    delay(150);
 
     if (voltageIGN < IGNITION_LIMIT) {
       delay(200);
