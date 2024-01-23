@@ -199,9 +199,10 @@ void loop() {
     voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
     Serial.print("IGN voltage: ");
     Serial.println(voltageIGN);
-    delay(400);
+    delay(200);
 
     if (voltageIGN < IGNITION_LIMIT) {
+      delay(200);
       voltageIGN = readInputVoltage(IGN_SENSOR_PIN);
       Serial.println("Test shut confirmation");
       Serial.print("IGN voltage: ");
@@ -218,7 +219,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
     digitalWrite(SHUT_PIN, getLevel(HIGH));
     Serial.println("Waiting for shutdown");
-    delay(20000);
+    delay(15000);
     digitalWrite(ILL_PIN, getLevel(LOW));
     digitalWrite(RELAY_PIN, getLevel(LOW));
     digitalWrite(SHUT_PIN, getLevel(LOW));
