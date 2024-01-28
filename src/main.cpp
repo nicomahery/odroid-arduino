@@ -79,10 +79,13 @@ float getIllQueueMean() {
 
 void updateIllVoltageAndApplyBrightness() {
   voltageILL = readInputVoltage(ILL_SENSOR_PIN);
-  Serial.print("ILL voltage: ");
+  Serial.print("Last ILL voltage: ");
   Serial.println(voltageILL);
   addToIllQueue(voltageILL);
-  digitalWrite(ILL_PIN, getLevel(getIllQueueMean() < ILLUMINATION_LIMIT ? HIGH: LOW));
+  voltageILL = getIllQueueMean();
+  Serial.print(" Mean ILL voltage: ");
+  Serial.println(voltageILL);
+  digitalWrite(ILL_PIN, getLevel(voltageILL < ILLUMINATION_LIMIT ? HIGH: LOW));
 }
 
 void waitForStartComplete() {
