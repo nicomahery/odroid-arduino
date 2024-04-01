@@ -2,10 +2,10 @@
 
 enum Mode { idle, start, run, shut};
 const uint8_t IGN_SENSOR_PIN = A0;
-const uint8_t ILL_SENSOR_PIN = A1;
-const uint8_t RELAY_PIN = 9;
-const uint8_t SHUT_PIN = 10;
-const uint8_t ILL_PIN = 11;
+const uint8_t ILL_SENSOR_PIN = A4;
+const uint8_t RELAY_PIN = 3;
+const uint8_t SHUT_PIN = 2;
+const uint8_t ILL_PIN = 5;
 const unsigned short MAX_RETRY = 50;
 const bool REVERSE_HIGH_LOW = false;
 const uint8_t QUEUE_SIZE = 4;
